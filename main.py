@@ -8,7 +8,7 @@ from views.help_view import HelpView
 load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="r!", intents=intents, help_command=None)
+bot = commands.Bot(command_prefix="rush!", intents=intents, help_command=None)
 
 
 @bot.event
@@ -49,11 +49,11 @@ async def rules(ctx):
 @bot.command(name="help")
 async def helpme(ctx: discord.TextChannel):
     embed = discord.Embed(title=f"Help {1}")
-    embed.add_field(name="help", value="Shows all of commands")
-    embed.add_field(name="rules", value="Shows rules of the Lucky Rush")
-    embed.add_field(name="start", value="Starts a new game")
-    embed.add_field(name="join", value="Join a game via code")
-    embed.add_field(name="gameopt", value="Set options of the game")
+    embed.add_field(name="help", value="Shows all of commands", inline=False)
+    embed.add_field(name="rules", value="Shows rules of the Lucky Rush", inline=False)
+    embed.add_field(name="start", value="Starts a new game", inline=False)
+    embed.add_field(name="join", value="Join a game via code", inline=False)
+    embed.add_field(name="gameopt", value="Set options of the game", inline=False)
     embed.set_footer(text="Prefix: rush!")
 
     await ctx.send(embed=embed, view=HelpView())
