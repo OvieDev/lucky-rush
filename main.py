@@ -3,8 +3,13 @@ import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 
+from views.help_view import HelpView
+
 load_dotenv()
-bot = commands.Bot(command_prefix="rush!")
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix="r!", intents=intents, help_command=None)
+
 
 @bot.event
 async def on_guild_join(guild: discord.Guild):
@@ -16,22 +21,42 @@ async def on_guild_join(guild: discord.Guild):
                                     """)
     await channel.send(embed=embed)
 
-@bot.command()
+
+@bot.event
+async def on_message(message):
+    await bot.process_commands(message)
+
+
+@bot.command(name="rules")
 async def rules(ctx):
+    print("xxx")
     embed = discord.Embed(title="Rules", description="""
     **GOAL:** Be the first person on the finish line
-    
+
     -----------
-    
+
     The game is divided on rounds. In each round you must pick, if
-    you want to **CHECK** the luckybox or **PASS** it. 
+    you want to **CHECK** the luckybox or **PASS** it.
     Each luckybox contains many fortunate (and unfortunate) stuff that can help you win (or lose) the game.
     In rounds 5 and 10, you have to check the box sadly.
     The game is played with 3 other players
     """, colour=discord.Colour.blue())
 
-    embed.set_footer(text=f"Sent in {int(round(bot.latency, 3)*1000)}ms")
+    embed.set_footer(text=f"Sent in {int(round(bot.latency, 3) * 1000)}ms")
     await ctx.send(embed=embed)
+
+
+@bot.command(name="help")
+async def helpme(ctx: discord.TextChannel):
+    embed = discord.Embed(title=f"Help {1}")
+    embed.add_field(name="help", value="Shows all of commands")
+    embed.add_field(name="rules", value="Shows rules of the Lucky Rush")
+    embed.add_field(name="start", value="Starts a new game")
+    embed.add_field(name="join", value="Join a game via code")
+    embed.add_field(name="gameopt", value="Set options of the game")
+    embed.set_footer(text="Prefix: rush!")
+
+    await ctx.send(embed=embed, view=HelpView())
 
 
 bot.run(os.getenv("TOKEN"))
