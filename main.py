@@ -6,6 +6,15 @@ from discord.ext import commands
 load_dotenv()
 bot = commands.Bot(command_prefix="rush!")
 
+@bot.event
+async def on_guild_join(guild: discord.Guild):
+    channel = guild.text_channels[0]
+    embed = discord.Embed(title="Hi! :wave:",
+                          description="""Thanks for adding me!
+                                    I'm just your friendly discord bot that let's you play this game called **LUCKY RUSH**
+                                    Although that's my main purpose, I have __**MUCH MORE**__ to offer. So type `rush!help` to see all commands
+                                    """)
+    await channel.send(embed=embed)
 
 @bot.command()
 async def rules(ctx):
