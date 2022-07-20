@@ -16,4 +16,4 @@ At round 5 and 10 you **MUST** check the box.\
 So there you have it. Have fun playing!!!
 
 # Invite the bot
-Here's the invite link: https://discord.com/api/oauth2/authorize?client_id=998968227751284838&permissions=8&scope=bot
+Here's the invite link: https://tinyurl.com/luckyrushinvite 

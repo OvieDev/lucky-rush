@@ -48,7 +48,7 @@ async def rules(ctx):
 
 @bot.command(name="help")
 async def helpme(ctx: discord.TextChannel):
-    embed = discord.Embed(title=f"Help {1}")
+    embed = discord.Embed(title=f"Help - Page 1")
     embed.add_field(name="help", value="Shows all of commands", inline=False)
     embed.add_field(name="rules", value="Shows rules of the Lucky Rush", inline=False)
     embed.add_field(name="start", value="Starts a new game", inline=False)
@@ -58,5 +58,8 @@ async def helpme(ctx: discord.TextChannel):
 
     await ctx.send(embed=embed, view=HelpView())
 
+@bot.command(name="invite")
+async def invite(ctx):
+    await ctx.send("Here's my invite link: <https://tinyurl.com/luckyrushinvite>")
 
 bot.run(os.getenv("TOKEN"))
