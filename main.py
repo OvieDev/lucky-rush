@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from components.GameSession import GameSession
 from views.help_view import HelpView
+from views.join_view import JoinView
 
 load_dotenv()
 intents = discord.Intents.default()
@@ -109,5 +110,9 @@ async def start(ctx):
     await c.set_permissions(ctx.author, overwrite=discord.PermissionOverwrite(
         view_channel=True
     ))
+
+@bot.command(name="join")
+async def join(ctx):
+    await ctx.send(view=JoinView())
 
 bot.run(os.getenv("TOKEN"))
