@@ -1,14 +1,22 @@
 import os
+import random
+import string
+
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 
+from components.GameSession import GameSession
 from views.help_view import HelpView
 
 load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="rush!", intents=intents, help_command=None)
+
+game_sessions = {
+
+}
 
 
 @bot.event
@@ -25,6 +33,14 @@ async def on_guild_join(guild: discord.Guild):
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
+
+
+@bot.event
+async def on_ready():
+    for i in bot.guilds:
+        for y in i.text_channels:
+            if "luckyrush" in y.name:
+                await y.delete()
 
 
 @bot.command(name="rules")
@@ -58,8 +74,40 @@ async def helpme(ctx: discord.TextChannel):
 
     await ctx.send(embed=embed, view=HelpView())
 
+
 @bot.command(name="invite")
 async def invite(ctx):
     await ctx.send("Here's my invite link: <https://tinyurl.com/luckyrushinvite>")
+
+
+@bot.command(name="github")
+async def github(ctx):
+    await ctx.send("Want to contribute? Sure, here's my github: <https://tinyurl.com/luckyrush>")
+
+
+@bot.command(name="start")
+async def start(ctx):
+    code = ''.join(random.choices(string.ascii_lowercase, k=10))
+    while True:
+        if code in game_sessions:
+            code = ''.join(random.choices(string.ascii_lowercase, k=10))
+        else:
+            break
+    game_sessions[code] = GameSession(ctx.author)
+
+    embed = discord.Embed(title="Waiting for players...", description=f"""
+    Invite some friends with this code: {code}
+    """)
+    embed.colour = discord.Colour.gold()
+
+    guild: discord.Guild = ctx.guild
+    c = await guild.create_text_channel(f"luckyrush-{len(game_sessions)}")
+    await c.send(embed=embed)
+    await c.set_permissions(guild.default_role, overwrite=discord.PermissionOverwrite(
+        view_channel=False
+    ))
+    await c.set_permissions(ctx.author, overwrite=discord.PermissionOverwrite(
+        view_channel=True
+    ))
 
 bot.run(os.getenv("TOKEN"))
