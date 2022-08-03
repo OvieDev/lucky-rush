@@ -1,12 +1,14 @@
+import asyncio
 import os
 import random
 import string
+from threading import Thread
 
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
 
-from components.GameSession import GameSession
+from components.GameSession import GameSession, sessions, sessiontime_decrease
 from views.help_view import HelpView
 from views.join_view import JoinView
 
@@ -15,9 +17,13 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="rush!", intents=intents, help_command=None)
 
-game_sessions = {
-
-}
+@bot.event
+async def on_session_terminated(u, k, c):
+    user = await bot.fetch_user(u)
+    await c.delete()
+    del sessions[k]
+    print(user)
+    await user.send("Your session was terminated because no one joined")
 
 
 @bot.event
@@ -90,11 +96,10 @@ async def github(ctx):
 async def start(ctx):
     code = ''.join(random.choices(string.ascii_lowercase, k=10))
     while True:
-        if code in game_sessions:
+        if code in sessions:
             code = ''.join(random.choices(string.ascii_lowercase, k=10))
         else:
             break
-    game_sessions[code] = GameSession(ctx.author)
 
     embed = discord.Embed(title="Waiting for players...", description=f"""
     Invite some friends with this code: {code}
@@ -102,7 +107,8 @@ async def start(ctx):
     embed.colour = discord.Colour.gold()
 
     guild: discord.Guild = ctx.guild
-    c = await guild.create_text_channel(f"luckyrush-{len(game_sessions)}")
+    c = await guild.create_text_channel(f"luckyrush-{len(sessions)}")
+    sessions[code] = GameSession(ctx.author, guild, c)
     await c.send(embed=embed)
     await c.set_permissions(guild.default_role, overwrite=discord.PermissionOverwrite(
         view_channel=False
@@ -115,4 +121,8 @@ async def start(ctx):
 async def join(ctx):
     await ctx.send(view=JoinView())
 
+t = Thread(target=sessiontime_decrease, args=[bot], daemon=True)
+t.start()
 bot.run(os.getenv("TOKEN"))
+
+

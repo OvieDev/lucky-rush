@@ -9,6 +9,5 @@ class JoinView(ui.View):
         super().__init__(timeout=timeout)
 
     @ui.button(label="Join via code!", style=discord.ButtonStyle.primary, emoji="🎉")
-    async def join_game(self, interaction: discord.Interaction, button):
+    async def join_game(self, interaction: discord.Interaction, button: ui.Button):
         await interaction.response.send_modal(JoinCodeModal())
-        button.disabled = True
