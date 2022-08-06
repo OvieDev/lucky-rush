@@ -85,7 +85,7 @@ async def helpme(ctx: discord.TextChannel):
 
 @bot.hybrid_command()
 async def invite(ctx):
-    await ctx.send("Here's my invite link: <https://tinyurl.com/luckyrushinvite>")
+    await ctx.send("Here's my invite link: <https://tinyurl.com/rushinvite>")
 
 
 @bot.hybrid_command()
