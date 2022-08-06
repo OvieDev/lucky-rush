@@ -44,13 +44,14 @@ async def on_message(message):
 
 @bot.event
 async def on_ready():
+    await bot.tree.sync()
     for i in bot.guilds:
         for y in i.text_channels:
             if "luckyrush" in y.name:
                 await y.delete()
 
 
-@bot.command(name="rules")
+@bot.hybrid_command()
 async def rules(ctx):
     print("xxx")
     embed = discord.Embed(title="Rules", description="""
@@ -69,7 +70,7 @@ async def rules(ctx):
     await ctx.send(embed=embed)
 
 
-@bot.command(name="help")
+@bot.hybrid_command(name="help")
 async def helpme(ctx: discord.TextChannel):
     embed = discord.Embed(title=f"Help - Page 1")
     embed.add_field(name="help", value="Shows all of commands", inline=False)
@@ -82,17 +83,18 @@ async def helpme(ctx: discord.TextChannel):
     await ctx.send(embed=embed, view=HelpView())
 
 
-@bot.command(name="invite")
+@bot.hybrid_command()
 async def invite(ctx):
     await ctx.send("Here's my invite link: <https://tinyurl.com/luckyrushinvite>")
 
 
-@bot.command(name="github")
+@bot.hybrid_command()
 async def github(ctx):
     await ctx.send("Want to contribute? Sure, here's my github: <https://tinyurl.com/luckyrush>")
 
 
-@bot.command(name="start")
+
+@bot.hybrid_command()
 async def start(ctx):
     code = ''.join(random.choices(string.ascii_lowercase, k=10))
     while True:
@@ -117,10 +119,17 @@ async def start(ctx):
         view_channel=True
     ))
 
-@bot.command(name="join")
+
+@bot.hybrid_command()
 async def join(ctx):
     await ctx.send(view=JoinView())
 
+
+@bot.hybrid_command()
+async def leave(ctx):
+    for i in sessions.values():
+        if ctx.author in i.players:
+            await i.leave(ctx.author)
 t = Thread(target=sessiontime_decrease, args=[bot], daemon=True)
 t.start()
 bot.run(os.getenv("TOKEN"))
