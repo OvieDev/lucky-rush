@@ -3,6 +3,8 @@ import time
 
 import discord
 
+from components.Game import Game
+
 sessions = {
 
 }
@@ -31,13 +33,19 @@ class GameSession:
         self.more_than_one = False
 
     async def join(self, user: discord.Member):
-        if not len(self.players) > 3:
+        if not len(self.players) == 3:
             self.players.append(user)
-            more_than_one = True
+            self.more_than_one = True
             await self.channel.set_permissions(user, overwrite=discord.PermissionOverwrite(
                 view_channel=True
             ))
             await self.players[0].send(f"{user.mention} joined to the session")
+
+            if len(self.players) == 3:
+                await self.channel.send(
+                    f"Starting the game! {self.players[0].mention} {self.players[1].mention} {self.players[2].mention}")
+                game = Game(self)
+                await game.round_progress()
 
     async def leave(self, member):
         if self.players[0] == member:
