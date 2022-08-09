@@ -25,7 +25,8 @@ def sessiontime_decrease(bot):
 
 
 class GameSession:
-    def __init__(self, creator: discord.Member, guild: discord.Guild, channel: discord.TextChannel):
+    def __init__(self, bot, creator: discord.Member, guild: discord.Guild, channel: discord.TextChannel):
+        self.bot = bot
         self.players = [creator]
         self.guild = guild
         self.until = 100
@@ -44,8 +45,8 @@ class GameSession:
             if len(self.players) == 3:
                 await self.channel.send(
                     f"Starting the game! {self.players[0].mention} {self.players[1].mention} {self.players[2].mention}")
-                game = Game(self)
-                await game.round_progress()
+                game = Game(self, self.bot)
+                await game.start_game()
 
     async def leave(self, member):
         if self.players[0] == member:

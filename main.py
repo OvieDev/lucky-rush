@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 
 from components.GameSession import GameSession, sessions, sessiontime_decrease
+from views.gameplay_view import GameplayView
 from views.help_view import HelpView
 from views.join_view import JoinView
 
@@ -16,6 +17,10 @@ load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="rush!", intents=intents, help_command=None)
+
+@bot.event
+async def on_timeout(message: discord.Message, game):
+    await message.edit(embed=game.create_message(), view=GameplayView(game))
 
 @bot.event
 async def on_session_terminated(u, k, c):
@@ -110,7 +115,7 @@ async def start(ctx):
 
     guild: discord.Guild = ctx.guild
     c = await guild.create_text_channel(f"luckyrush-{len(sessions)}")
-    sessions[code] = GameSession(ctx.author, guild, c)
+    sessions[code] = GameSession(bot, ctx.author, guild, c)
     await c.send(embed=embed)
     await c.set_permissions(guild.default_role, overwrite=discord.PermissionOverwrite(
         view_channel=False

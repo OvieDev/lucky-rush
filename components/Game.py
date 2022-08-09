@@ -1,16 +1,27 @@
+import threading
+import time
+
 import discord
 
+from components.GameChoice import GameChoice
 from views.gameplay_view import GameplayView
 
 
 class Game:
-    def __init__(self, session):
+    def __init__(self, session, bot):
+        self.bot = bot
         self.players = session.players
         self.player_to_field = {}
         self.channel = session.channel
         self.round = 1
+        self.moved = {}
+        self.player_choice = {}
+        self.message : discord.Message = None
         for i in self.players:
             self.player_to_field[f"{i.id}"] = 1
+            self.moved[f"{i.id}"] = False
+            self.moved[f"{i.id}"] = GameChoice.NONE
+        self.t = threading.Thread(target=self.wait_for_choices, daemon=True)
 
     def create_message(self):
         embed = discord.Embed(title=f"Round {self.round}")
@@ -40,6 +51,24 @@ class Game:
             counter -= 1
         return embed
 
-    async def round_progress(self):
+    def wait_for_choices(self):
+        time.sleep(30)
+        for k, v in self.moved.items():
+            if v is False:
+                self.player_to_field[k] += 1
+                self.moved[k] = True
+        self.bot.dispatch("timeout", self.message, self)
 
-        await self.channel.send(embed=self.create_message(), view=GameplayView(self))
+    def choice_made(self):
+        for v in self.moved.values():
+            if v is False:
+                break
+        else:
+            self.t.join()
+
+    async def start_game(self):
+        self.t.start()
+        self.message = await self.channel.send(embed=self.create_message(), view=GameplayView(self))
+
+    # async def round_completion(self):
+
