@@ -17,7 +17,7 @@ class GameplayView(ui.View):
             self.game.player_data[f"{interaction.user.id}"]["moved"] = True
             self.game.player_data[f"{interaction.user.id}"]["choice"] = GameChoice.CHECK
             await interaction.response.edit_message(embed=self.game.create_message(), view=self)
-            self.game.choice_made()
+            await self.game.choice_made()
         else:
             await interaction.response.send_message("You've already did your move! Wait for the next round!", ephemeral=True)
 
@@ -28,6 +28,6 @@ class GameplayView(ui.View):
             self.game.player_data[f"{interaction.user.id}"]["moved"] = True
             self.game.player_data[f"{interaction.user.id}"]["choice"] = GameChoice.PASS
             await interaction.response.edit_message(embed=self.game.create_message(), view=self)
-            self.game.choice_made()
+            await self.game.choice_made()
         else:
             await interaction.response.send_message("You've already did your move! Wait for the next round!", ephemeral=True)
