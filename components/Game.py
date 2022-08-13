@@ -1,3 +1,4 @@
+import asyncio
 import threading
 import time
 
@@ -11,17 +12,19 @@ class Game:
     def __init__(self, session, bot):
         self.bot = bot
         self.players = session.players
-        self.player_to_field = {}
+        self.player_data = {}
         self.channel = session.channel
         self.round = 1
         self.moved = {}
         self.player_choice = {}
         self.message : discord.Message = None
         for i in self.players:
-            self.player_to_field[f"{i.id}"] = 1
-            self.moved[f"{i.id}"] = False
-            self.moved[f"{i.id}"] = GameChoice.NONE
-        self.t = threading.Thread(target=self.wait_for_choices, daemon=True)
+            self.player_data[f"{i.id}"] = {
+                "field": 1,
+                "moved": False,
+                "choice": GameChoice.NONE
+            }
+        self.t = None
 
     def create_message(self):
         embed = discord.Embed(title=f"Round {self.round}")
@@ -35,15 +38,15 @@ class Game:
                 return ":black_large_square:"
 
         for i in range(9):
-            if self.player_to_field[f"{self.players[0].id}"] == counter:
+            if self.player_data[f"{self.players[0].id}"]["field"] == counter:
                 embed.description += ":mage:"
             else:
                 embed.description += square_color()
-            if self.player_to_field[f"{self.players[1].id}"] == counter:
+            if self.player_data[f"{self.players[1].id}"]["field"] == counter:
                 embed.description += ":vampire:"
             else:
                 embed.description += square_color()
-            if self.player_to_field[f"{self.players[2].id}"] == counter:
+            if self.player_data[f"{self.players[2].id}"]["field"] == counter:
                 embed.description += ":genie:"
             else:
                 embed.description += square_color()
@@ -51,24 +54,24 @@ class Game:
             counter -= 1
         return embed
 
-    def wait_for_choices(self):
-        time.sleep(30)
-        for k, v in self.moved.items():
-            if v is False:
-                self.player_to_field[k] += 1
-                self.moved[k] = True
-        self.bot.dispatch("timeout", self.message, self)
+    async def wait_for_choices(self):
+        await asyncio.sleep(30)
+        for k in self.player_data:
+            if self.player_data[k]["moved"] is False:
+                self.player_data[k]["field"] += 1
+                self.player_data[k]["moved"] = True
+        await self.message.edit(embed=self.create_message(), view=GameplayView(self))
 
     def choice_made(self):
-        for v in self.moved.values():
-            if v is False:
+        for k in self.player_data:
+            if self.player_data[k]["moved"] is False:
                 break
         else:
-            self.t.join()
+            self.t.cancel("Task canceled")
 
     async def start_game(self):
-        self.t.start()
+        self.t = asyncio.create_task(self.wait_for_choices())
         self.message = await self.channel.send(embed=self.create_message(), view=GameplayView(self))
-
+        await self.t
     # async def round_completion(self):
 

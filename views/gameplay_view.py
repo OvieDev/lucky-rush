@@ -1,6 +1,8 @@
 import discord
 from discord import ui
 
+from components.GameChoice import GameChoice
+
 
 class GameplayView(ui.View):
 
@@ -8,10 +10,24 @@ class GameplayView(ui.View):
         self.game = game
         super().__init__(timeout=timeout)
 
-    @ui.button(label="Check", style=discord.ButtonStyle.danger, emoji="❓")
+    @ui.button(label="Check", style=discord.ButtonStyle.danger, emoji="❔")
     async def check_button(self, interaction: discord.Interaction, button: ui.Button):
-        if not self.game.moved[f"{interaction.user.id}"]:
-            self.game.player_to_field[f"{interaction.user.id}"] += 1
-            self.game.moved[f"{interaction.user.id}"] = True
+        if not self.game.player_data[f"{interaction.user.id}"]["moved"]:
+            self.game.player_data[f"{interaction.user.id}"]["field"] += 1
+            self.game.player_data[f"{interaction.user.id}"]["moved"] = True
+            self.game.player_data[f"{interaction.user.id}"]["choice"] = GameChoice.CHECK
             await interaction.response.edit_message(embed=self.game.create_message(), view=self)
             self.game.choice_made()
+        else:
+            await interaction.response.send_message("You've already did your move! Wait for the next round!", ephemeral=True)
+
+    @ui.button(label="Pass", style=discord.ButtonStyle.gray, emoji="👟")
+    async def pass_button(self, interaction: discord.Interaction, button: ui.Button):
+        if not self.game.player_data[f"{interaction.user.id}"]["moved"]:
+            self.game.player_data[f"{interaction.user.id}"]["field"] += 1
+            self.game.player_data[f"{interaction.user.id}"]["moved"] = True
+            self.game.player_data[f"{interaction.user.id}"]["choice"] = GameChoice.PASS
+            await interaction.response.edit_message(embed=self.game.create_message(), view=self)
+            self.game.choice_made()
+        else:
+            await interaction.response.send_message("You've already did your move! Wait for the next round!", ephemeral=True)
