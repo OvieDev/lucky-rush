@@ -4,6 +4,7 @@ import time
 
 import discord
 
+from components.Luckybox import select_random_box
 from components.GameChoice import GameChoice
 from views.gameplay_view import GameplayView
 
@@ -22,7 +23,9 @@ class Game:
             self.player_data[f"{i.id}"] = {
                 "field": 1,
                 "moved": False,
-                "choice": GameChoice.NONE
+                "choice": GameChoice.NONE,
+                "cannot_move_for": 0,
+                "luckyboxes": [False, False, False, False, False, False, False, False, False, False]
             }
         self.t = None
 
@@ -34,13 +37,15 @@ class Game:
             if choice == GameChoice.PASS:
                 final_string += f"{user.mention} passed the luckybox.\n"
             elif choice == GameChoice.CHECK:
-                final_string += f"{user.mention} checked the luckybox. Nothing was there sadly...\n"
+                lb = select_random_box(self, str(user.id))
+                final_string += f"{user.mention} checked the luckybox. {lb.text}\n"
+                lb.on_check()
         return final_string
 
     def create_message(self):
         embed = discord.Embed(title=f"Round {self.round}")
         embed.description = ":white_large_square::white_large_square::white_large_square:\n"
-        counter = 9
+        counter = 11
 
         def square_color():
             if counter == 1:
@@ -48,7 +53,7 @@ class Game:
             else:
                 return ":black_large_square:"
 
-        for i in range(9):
+        for i in range(11):
             if self.player_data[f"{self.players[0].id}"]["field"] == counter:
                 embed.description += ":mage:"
             else:
