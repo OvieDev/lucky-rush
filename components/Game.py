@@ -1,9 +1,8 @@
 import asyncio
-import threading
-import time
 
 import discord
 
+from components.Luckybox import select_random_box
 from components.GameChoice import GameChoice
 from views.gameplay_view import GameplayView
 
@@ -22,7 +21,9 @@ class Game:
             self.player_data[f"{i.id}"] = {
                 "field": 1,
                 "moved": False,
-                "choice": GameChoice.NONE
+                "choice": GameChoice.NONE,
+                "cannot_move_for": 0,
+                "luckyboxes": [False, False, False, False, False, False, False, False, False, False]
             }
         self.t = None
 
@@ -31,16 +32,21 @@ class Game:
         for k in self.player_data:
             choice = self.player_data[k]["choice"]
             user: discord.User = await self.bot.fetch_user(int(k))
+
             if choice == GameChoice.PASS:
                 final_string += f"{user.mention} passed the luckybox.\n"
             elif choice == GameChoice.CHECK:
-                final_string += f"{user.mention} checked the luckybox. Nothing was there sadly...\n"
+                lb = select_random_box(self, str(user.id))
+                final_string += f"{user.mention} checked the luckybox. {lb.text}\n"
+                lb.on_check()
+            elif choice == GameChoice.NONE:
+                final_string += f"{user.mention} is standing in place.\n"
         return final_string
 
     def create_message(self):
         embed = discord.Embed(title=f"Round {self.round}")
         embed.description = ":white_large_square::white_large_square::white_large_square:\n"
-        counter = 9
+        counter = 11
 
         def square_color():
             if counter == 1:
@@ -48,7 +54,7 @@ class Game:
             else:
                 return ":black_large_square:"
 
-        for i in range(9):
+        for i in range(11):
             if self.player_data[f"{self.players[0].id}"]["field"] == counter:
                 embed.description += ":mage:"
             else:
@@ -66,14 +72,25 @@ class Game:
         return embed
 
     async def wait_for_choices(self):
-        await asyncio.sleep(30)
-        for k in self.player_data:
-            if self.player_data[k]["moved"] is False:
-                self.player_data[k]["field"] += 1
-                self.player_data[k]["moved"] = True
-                self.player_data[k]["choice"] = GameChoice.PASS
-        await self.message.edit(embed=self.create_message(), view=GameplayView(self))
-        await self.round_completion()
+        try:
+            for i in self.player_data:
+                if self.player_data[i]["cannot_move_for"]==0:
+                    break
+            else:
+                raise Exception
+
+            await asyncio.sleep(30)
+
+            for k in self.player_data:
+                if self.player_data[k]["moved"] is False and self.player_data[k]["cannot_move_for"]==0:
+                    self.player_data[k]["field"] += 1
+                    self.player_data[k]["moved"] = True
+                    self.player_data[k]["choice"] = GameChoice.PASS
+        except Exception:
+            pass
+        finally:
+            await self.message.edit(embed=self.create_message(), view=GameplayView(self))
+            await self.round_completion()
 
     async def choice_made(self):
         for k in self.player_data:
@@ -85,6 +102,7 @@ class Game:
 
     async def start_game(self):
         self.t = asyncio.create_task(self.wait_for_choices())
+
         if self.message:
             await self.message.edit(content="", embed=self.create_message(), view=GameplayView(self))
         else:
@@ -92,11 +110,18 @@ class Game:
         await self.t
 
     async def round_completion(self):
+        for i in self.player_data:
+            if self.player_data[i]["cannot_move_for"] > 0:
+                self.player_data[i]["cannot_move_for"] -= 1
+
         await self.message.edit(content=f"""**ROUND {self.round} FINISH**\n{await self.player_choice_gen()}
         """, view=None, embed=None)
+
         self.round += 1
-        await asyncio.sleep(5)
+        await asyncio.sleep(7.5)
+
         for k in self.player_data:
-            self.player_data[k]["moved"] = False
+            if self.player_data[k]["cannot_move_for"] == 0:
+                self.player_data[k]["moved"] = False
             self.player_data[k]["choice"] = GameChoice.NONE
         await self.start_game()
