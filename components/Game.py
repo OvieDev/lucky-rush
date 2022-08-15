@@ -9,6 +9,8 @@ from views.gameplay_view import GameplayView
 
 class Game:
     def __init__(self, session, bot):
+        self.__wait_time = 30
+        self.stopped = False
         self.bot = bot
         self.players = session.players
         self.player_data = {}
@@ -25,7 +27,7 @@ class Game:
                 "cannot_move_for": 0,
                 "luckyboxes": [False, False, False, False, False, False, False, False, False, False]
             }
-        self.t = None
+        self.t: asyncio.Task = None
 
     async def player_choice_gen(self):
         final_string = ""
@@ -72,44 +74,60 @@ class Game:
         return embed
 
     async def wait_for_choices(self):
-        try:
-            for i in self.player_data:
-                if self.player_data[i]["cannot_move_for"]==0:
-                    break
-            else:
-                raise Exception
+        while True:
+            try:
+                for i in self.player_data:
+                    if self.player_data[i]["cannot_move_for"] == 0:
+                        break
+                else:
+                    raise Exception
 
-            await asyncio.sleep(30)
-
-            for k in self.player_data:
-                if self.player_data[k]["moved"] is False and self.player_data[k]["cannot_move_for"]==0:
-                    self.player_data[k]["field"] += 1
-                    self.player_data[k]["moved"] = True
-                    self.player_data[k]["choice"] = GameChoice.PASS
-        except Exception:
-            pass
-        finally:
-            await self.message.edit(embed=self.create_message(), view=GameplayView(self))
-            await self.round_completion()
+                await asyncio.sleep(1)
+                if not self.stopped:
+                    self.__wait_time -= 1
+                if self.__wait_time<=0 and not self.stopped:
+                    for k in self.player_data:
+                        if self.player_data[k]["moved"] is False and self.player_data[k]["cannot_move_for"] == 0:
+                            self.player_data[k]["field"] += 1
+                            self.player_data[k]["moved"] = True
+                            self.player_data[k]["choice"] = GameChoice.PASS
+                            await self.round_completion()
+            except Exception:
+                pass
+            finally:
+                await self.message.edit(embed=self.create_message(), view=GameplayView(self))
 
     async def choice_made(self):
-        for k in self.player_data:
-            if self.player_data[k]["moved"] is False:
-                break
-        else:
+        try:
+            for k in self.player_data:
+                if self.player_data[k]["moved"] is False:
+                    break
+                if self.player_data[k]["field"] >= 11:
+                    raise Exception(k)
+            else:
+                self.t.cancel()
+                await self.round_completion()
+        except Exception as e:
             self.t.cancel("Task canceled")
-            await self.round_completion()
+            await self.message.delete()
+            user = self.bot.fetch_user(int(e.args[0]))
+            await self.channel.send(f"{user.mention} have won the game!")
+            await asyncio.sleep(5)
+            await self.channel.delete()
+            del self
 
     async def start_game(self):
-        self.t = asyncio.create_task(self.wait_for_choices())
-
         if self.message:
             await self.message.edit(content="", embed=self.create_message(), view=GameplayView(self))
         else:
             self.message = await self.channel.send(embed=self.create_message(), view=GameplayView(self))
+        if self.t is None:
+            self.t = asyncio.create_task(self.wait_for_choices())
         await self.t
 
     async def round_completion(self):
+        self.stopped = True
+        self.__wait_time = 30
         for i in self.player_data:
             if self.player_data[i]["cannot_move_for"] > 0:
                 self.player_data[i]["cannot_move_for"] -= 1
@@ -118,10 +136,11 @@ class Game:
         """, view=None, embed=None)
 
         self.round += 1
-        await asyncio.sleep(7.5)
+        await asyncio.sleep(7)
 
         for k in self.player_data:
             if self.player_data[k]["cannot_move_for"] == 0:
                 self.player_data[k]["moved"] = False
             self.player_data[k]["choice"] = GameChoice.NONE
+        self.stopped = False
         await self.start_game()
