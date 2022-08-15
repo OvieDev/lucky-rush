@@ -38,11 +38,23 @@ class Game:
             if choice == GameChoice.PASS:
                 final_string += f"{user.mention} passed the luckybox.\n"
             elif choice == GameChoice.CHECK:
-                lb = select_random_box(self, str(user.id))
-                final_string += f"{user.mention} checked the luckybox. {lb.text}\n"
-                lb.on_check()
+                pdata = self.player_data[str(user.id)]
+                if pdata["luckyboxes"][pdata["field"]-2] is False:
+                    lb = select_random_box(self, str(user.id))
+                    final_string += f"{user.mention} checked the luckybox. {lb.text}\n"
+                    lb.on_check()
+                    pdata["luckyboxes"][pdata["field"]-2] = True
+                else:
+                    final_string += f"{user.mention} tried to check the luckybox, but it was already open!\n"
+
+                if self.player_data[str(user.id)]["field"] >= 11:
+                    await self.end_game(str(user.id))
+                elif self.player_data[str(user.id)]["field"] < 1:
+                    self.player_data[str(user.id)]["field"] = 1
+
             elif choice == GameChoice.NONE:
                 final_string += f"{user.mention} is standing in place.\n"
+
         return final_string
 
     def create_message(self):
@@ -50,25 +62,28 @@ class Game:
         embed.description = ":white_large_square::white_large_square::white_large_square:\n"
         counter = 11
 
-        def square_color():
+        def square_color(who):
             if counter == 1:
                 return ":green_square:"
             else:
-                return ":black_large_square:"
+                if self.player_data[who]["luckyboxes"][counter-2] is True:
+                    return ":large_orange_diamond:"
+                else:
+                    return ":black_large_square:"
 
         for i in range(11):
             if self.player_data[f"{self.players[0].id}"]["field"] == counter:
                 embed.description += ":mage:"
             else:
-                embed.description += square_color()
+                embed.description += square_color(f"{self.players[0].id}")
             if self.player_data[f"{self.players[1].id}"]["field"] == counter:
                 embed.description += ":vampire:"
             else:
-                embed.description += square_color()
+                embed.description += square_color(f"{self.players[1].id}")
             if self.player_data[f"{self.players[2].id}"]["field"] == counter:
                 embed.description += ":genie:"
             else:
-                embed.description += square_color()
+                embed.description += square_color(f"{self.players[2].id}")
             embed.description += "\n"
             counter -= 1
         return embed
@@ -85,36 +100,40 @@ class Game:
                 await asyncio.sleep(1)
                 if not self.stopped:
                     self.__wait_time -= 1
-                if self.__wait_time<=0 and not self.stopped:
+                if self.__wait_time <= 0 and not self.stopped:
                     for k in self.player_data:
                         if self.player_data[k]["moved"] is False and self.player_data[k]["cannot_move_for"] == 0:
                             self.player_data[k]["field"] += 1
                             self.player_data[k]["moved"] = True
                             self.player_data[k]["choice"] = GameChoice.PASS
+                            print("Timeouted route")
                             await self.round_completion()
             except Exception:
-                pass
-            finally:
-                await self.message.edit(embed=self.create_message(), view=GameplayView(self))
+                print("Exceptional route")
+                await self.round_completion()
+
+    async def end_game(self, e):
+        await self.message.delete()
+        user = await self.bot.fetch_user(int(e))
+        await self.channel.send(f"{user.mention} have won the game!")
+        await asyncio.sleep(5)
+        await self.channel.delete()
+        del self
 
     async def choice_made(self):
         try:
             for k in self.player_data:
+                print(self.player_data)
+                if self.player_data[k]["field"] >= 12:
+                    raise Exception(k)
                 if self.player_data[k]["moved"] is False:
                     break
-                if self.player_data[k]["field"] >= 11:
-                    raise Exception(k)
             else:
-                self.t.cancel()
+                print("Normal route")
                 await self.round_completion()
         except Exception as e:
             self.t.cancel("Task canceled")
-            await self.message.delete()
-            user = self.bot.fetch_user(int(e.args[0]))
-            await self.channel.send(f"{user.mention} have won the game!")
-            await asyncio.sleep(5)
-            await self.channel.delete()
-            del self
+            await self.end_game(e.args[0])
 
     async def start_game(self):
         if self.message:
@@ -123,7 +142,7 @@ class Game:
             self.message = await self.channel.send(embed=self.create_message(), view=GameplayView(self))
         if self.t is None:
             self.t = asyncio.create_task(self.wait_for_choices())
-        await self.t
+            await self.t
 
     async def round_completion(self):
         self.stopped = True

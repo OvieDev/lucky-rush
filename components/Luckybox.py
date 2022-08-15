@@ -63,6 +63,25 @@ luckyboxes = [
         "enemies": {
             "timeout": 1
         }
+    }),
+    Luckybox(
+        "Suddenly, you hear a funky music, which makes you go craaazy 😛. You move one field ahead, HOWEVER you also need to wait for the music to finish (about one turn)",
+        {
+            "self": {
+                "fields": 1,
+                "timeout": 1
+            }
+        }),
+    Luckybox("You hit yourself in your pinky toe after you opened empty luckybox. Your entire nervous system is in pain, so you move 2 fields back to get some medicine or something???", {
+        "self": {
+            "fields": -2
+        }
+    }),
+    Luckybox("A rocket emerges from the box which hits somebody. Nobody really knows what happens to that person", {
+        "random": {
+            "fields": random.randint(-2, 2),
+            "timeout": 1
+        }
     })
 ]
 
