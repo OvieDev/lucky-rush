@@ -39,21 +39,31 @@ class Game:
                 final_string += f"{user.mention} passed the luckybox.\n"
             elif choice == GameChoice.CHECK:
                 pdata = self.player_data[str(user.id)]
-                if pdata["luckyboxes"][pdata["field"]-2] is False:
+
+                if pdata["field"] - 2 < 0:
+                    field = 0
+                else:
+                    field = pdata["field"] - 2
+
+                if pdata["luckyboxes"][field] is False:
                     lb = select_random_box(self, str(user.id))
                     final_string += f"{user.mention} checked the luckybox. {lb.text}\n"
                     lb.on_check()
-                    pdata["luckyboxes"][pdata["field"]-2] = True
+                    pdata["luckyboxes"][field] = True
                 else:
                     final_string += f"{user.mention} tried to check the luckybox, but it was already open!\n"
 
-                if self.player_data[str(user.id)]["field"] >= 11:
-                    await self.end_game(str(user.id))
-                elif self.player_data[str(user.id)]["field"] < 1:
-                    self.player_data[str(user.id)]["field"] = 1
-
             elif choice == GameChoice.NONE:
                 final_string += f"{user.mention} is standing in place.\n"
+
+            winner_list = []
+            for i in self.player_data:
+                if self.player_data[i]["field"] >= 12:
+                    winner_list.append(i)
+            if len(winner_list) > 0:
+                await self.end_game(winner_list)
+            if self.player_data[str(user.id)]["field"] < 1:
+                self.player_data[str(user.id)]["field"] = 1
 
         return final_string
 
@@ -66,7 +76,7 @@ class Game:
             if counter == 1:
                 return ":green_square:"
             else:
-                if self.player_data[who]["luckyboxes"][counter-2] is True:
+                if self.player_data[who]["luckyboxes"][counter - 2] is True:
                     return ":large_orange_diamond:"
                 else:
                     return ":black_large_square:"
@@ -86,6 +96,7 @@ class Game:
                 embed.description += square_color(f"{self.players[2].id}")
             embed.description += "\n"
             counter -= 1
+        embed.description += f"\n\n:mage: - {self.players[0].mention}, :vampire: - {self.players[1].mention}, :genie: - {self.players[2].mention}"
         return embed
 
     async def wait_for_choices(self):
@@ -107,33 +118,30 @@ class Game:
                             self.player_data[k]["moved"] = True
                             self.player_data[k]["choice"] = GameChoice.PASS
                             print("Timeouted route")
-                            await self.round_completion()
+                    await self.round_completion()
             except Exception:
                 print("Exceptional route")
                 await self.round_completion()
 
-    async def end_game(self, e):
+    async def end_game(self, users):
         await self.message.delete()
-        user = await self.bot.fetch_user(int(e))
-        await self.channel.send(f"{user.mention} have won the game!")
-        await asyncio.sleep(5)
+        mentions = ""
+        for u in users:
+            user = await self.bot.fetch_user(int(u))
+            mentions += f"{user.mention}, "
+        await self.channel.send(f"{mentions}you have won the game!")
+        await asyncio.sleep(7)
         await self.channel.delete()
         del self
 
     async def choice_made(self):
-        try:
-            for k in self.player_data:
-                print(self.player_data)
-                if self.player_data[k]["field"] >= 12:
-                    raise Exception(k)
-                if self.player_data[k]["moved"] is False:
-                    break
-            else:
-                print("Normal route")
-                await self.round_completion()
-        except Exception as e:
-            self.t.cancel("Task canceled")
-            await self.end_game(e.args[0])
+        for k in self.player_data:
+            print(self.player_data)
+            if self.player_data[k]["moved"] is False:
+                break
+        else:
+            print("Normal route")
+            await self.round_completion()
 
     async def start_game(self):
         if self.message:
