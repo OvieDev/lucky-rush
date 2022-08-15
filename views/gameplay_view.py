@@ -47,3 +47,15 @@ class GameplayView(ui.View):
             else:
                 await interaction.response.send_message("You've already did your move! Wait for the next round!",
                                                         ephemeral=True)
+
+    @ui.button(label="Action Card", style=discord.ButtonStyle.blurple, emoji="<:action_card:1008726126220300358>")
+    async def action_card_button(self, interaction: discord.Interaction, button):
+        pass
+
+    @ui.button(label="Counter Card", style=discord.ButtonStyle.green, emoji="<:counter_card:1008727843506765915>")
+    async def counter_card_button(self, interaction: discord.Interaction, button):
+        pass
+
+    @ui.button(label="Trap Card", style=discord.ButtonStyle.danger, emoji="<:trap_card:1008729882974490735>")
+    async def trap_card_button(self, interaction: discord.Interaction, button):
+        pass
