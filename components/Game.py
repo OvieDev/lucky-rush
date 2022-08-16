@@ -40,15 +40,15 @@ class Game:
         self.t: asyncio.Task = None
 
     async def player_choice_gen(self):
-        final_string = ""
-        for k in self.player_data:
-            choice = self.player_data[k]["choice"]
-            user: discord.User = await self.bot.fetch_user(int(k))
+        embed = discord.Embed(title=f"Round {self.round} COMPLETED!", description="What happened in this round?\n")
+        for i in self.players:
+            final_string = ""
 
-            if choice == GameChoice.PASS:
-                final_string += f"{user.mention} passed the luckybox.\n"
-            elif choice == GameChoice.CHECK:
-                pdata = self.player_data[str(user.id)]
+            if self.player_data[f"{i.id}"]["choice"] == GameChoice.PASS:
+                final_string = f"Have passed the luckybox"
+
+            elif self.player_data[f"{i.id}"]["choice"] == GameChoice.CHECK:
+                pdata = self.player_data[f"{i.id}"]
 
                 if pdata["field"] - 2 < 0:
                     field = 0
@@ -56,31 +56,37 @@ class Game:
                     field = pdata["field"] - 2
 
                 if pdata["luckyboxes"][field] is False:
-                    lb = select_random_box(self, str(user.id))
-                    final_string += f"{user.mention} checked the luckybox. {lb.text}\n"
+                    lb = select_random_box(self, f"{i.id}")
+                    final_string = f"Have checked the luckybox. {lb.text}\n"
                     lb.on_check()
                     pdata["luckyboxes"][field] = True
-
                     card = random.randint(0, 2)
+
                     if card == 0:
                         card_type = "action_cards"
+
                     elif card == 1:
                         card_type = "trap_cards"
+
                     else:
                         card_type = "counter_cards"
 
                     pdata[card_type] += 1
-                    final_string += f"{user.mention} also receives 1 {Game.card_types[card_type]}\n"
+                    final_string += f"{i.mention} also receives 1 {Game.card_types[card_type]}\n"
+
                 else:
-                    final_string += f"{user.mention} tried to check the luckybox, but it was already open!\n"
+                    final_string = "Have tried to check the luckybox, but it was already open!"
 
-            elif choice == GameChoice.NONE:
-                final_string += f"{user.mention} is standing in place.\n"
+            elif self.player_data[f"{i.id}"]["choice"] == GameChoice.NONE:
+                final_string = "Is standing"
+            embed.add_field(name=f"{i.name}", value=final_string, inline=False)
 
-            if self.player_data[str(user.id)]["field"] < 1:
-                self.player_data[str(user.id)]["field"] = 1
-
-        return final_string
+        footer = "Players waiting: "
+        for p in self.players:
+            footer += f"{p.name} : {self.player_data[f'{p.id}']['cannot_move_for']}, "
+        embed.set_footer(text=footer)
+        embed.colour = discord.Colour.random()
+        return embed
 
     def create_message(self):
         embed = discord.Embed(title=f"Round {self.round}")
@@ -185,8 +191,7 @@ class Game:
             if self.player_data[i]["cannot_move_for"] > 0:
                 self.player_data[i]["cannot_move_for"] -= 1
 
-        await self.message.edit(content=f"""**ROUND {self.round} FINISH**\n{await self.player_choice_gen()}
-        """, view=None, embed=None)
+        await self.message.edit(view=None, embed=await self.player_choice_gen())
 
         self.round += 1
         await asyncio.sleep(7)
