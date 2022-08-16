@@ -16,7 +16,7 @@ class Game:
     }
 
     def __init__(self, session, bot):
-        self.__wait_time = 30
+        self.__wait_time = 15
         self.stopped = False
         self.bot = bot
         self.players = session.players
@@ -32,7 +32,7 @@ class Game:
                 "moved": False,
                 "choice": GameChoice.NONE,
                 "cannot_move_for": 0,
-                "luckyboxes": [False, False, False, False, False, False, False, False, False, False],
+                "luckyboxes": [False, False, False, False, False, False, False, False, False, False, True],
                 "action_cards": 0,
                 "counter_cards": 0,
                 "trap_cards": 0
@@ -61,13 +61,13 @@ class Game:
                     lb.on_check()
                     pdata["luckyboxes"][field] = True
 
-                    card = random.randint(0,2)
-                    if card==0:
-                        card_type="action_cards"
-                    elif card==1:
-                        card_type="trap_cards"
+                    card = random.randint(0, 2)
+                    if card == 0:
+                        card_type = "action_cards"
+                    elif card == 1:
+                        card_type = "trap_cards"
                     else:
-                        card_type="counter_cards"
+                        card_type = "counter_cards"
 
                     pdata[card_type] += 1
                     final_string += f"{user.mention} also receives 1 {Game.card_types[card_type]}\n"
@@ -76,15 +76,6 @@ class Game:
 
             elif choice == GameChoice.NONE:
                 final_string += f"{user.mention} is standing in place.\n"
-
-            winner_list = []
-
-            for i in self.player_data:
-                if self.player_data[i]["field"] >= 12:
-                    winner_list.append(i)
-
-            if len(winner_list) > 0:
-                await self.end_game(winner_list)
 
             if self.player_data[str(user.id)]["field"] < 1:
                 self.player_data[str(user.id)]["field"] = 1
@@ -188,7 +179,7 @@ class Game:
 
     async def round_completion(self):
         self.stopped = True
-        self.__wait_time = 30
+        self.__wait_time = 15
 
         for i in self.player_data:
             if self.player_data[i]["cannot_move_for"] > 0:

@@ -13,17 +13,17 @@ class GameplayView(ui.View):
     @ui.button(label="Check", style=discord.ButtonStyle.danger, emoji="❔")
     async def check_button(self, interaction: discord.Interaction, button: ui.Button):
         uid = interaction.user.id
-        if not self.game.player_data[f"{uid}"]["moved"] and \
-                self.game.player_data[f"{uid}"]["cannot_move_for"] == 0:
-            self.game.player_data[f"{uid}"]["field"] += 1
-            self.game.player_data[f"{uid}"]["moved"] = True
-            self.game.player_data[f"{uid}"]["choice"] = GameChoice.CHECK
+        pdata = self.game.player_data[f"{uid}"]
+        if not pdata["moved"] and pdata["cannot_move_for"] == 0:
+            pdata["field"] += 1
+            pdata["moved"] = True
+            pdata["choice"] = GameChoice.CHECK
             await interaction.response.edit_message(embed=self.game.create_message(), view=self)
             await self.game.choice_made()
         else:
-            if self.game.player_data[f"{uid}"]["cannot_move_for"] != 0:
+            if pdata["cannot_move_for"] != 0:
                 await interaction.response.send_message(
-                    f"You cannot move for {self.game.player_data[f'{uid}']['cannot_move_for']}",
+                    f"You cannot move for {pdata['cannot_move_for']} turns",
                     ephemeral=True)
             else:
                 await interaction.response.send_message("You've already did your move! Wait for the next round!",
@@ -32,17 +32,17 @@ class GameplayView(ui.View):
     @ui.button(label="Pass", style=discord.ButtonStyle.gray, emoji="👟")
     async def pass_button(self, interaction: discord.Interaction, button: ui.Button):
         uid = interaction.user.id
-        if not self.game.player_data[f"{uid}"]["moved"] and \
-                self.game.player_data[f"{uid}"]["cannot_move_for"] == 0:
-            self.game.player_data[f"{uid}"]["field"] += 1
-            self.game.player_data[f"{uid}"]["moved"] = True
-            self.game.player_data[f"{uid}"]["choice"] = GameChoice.PASS
+        pdata = self.game.player_data[f"{uid}"]
+        if not pdata["moved"] and pdata["cannot_move_for"] == 0:
+            pdata["field"] += 1
+            pdata["moved"] = True
+            pdata["choice"] = GameChoice.PASS
             await interaction.response.edit_message(embed=self.game.create_message(), view=self)
             await self.game.choice_made()
         else:
-            if self.game.player_data[f"{uid}"]["cannot_move_for"] != 0:
+            if pdata["cannot_move_for"] != 0:
                 await interaction.response.send_message(
-                    f"You cannot move for {self.game.player_data[f'{uid}']['cannot_move_for']}",
+                    f"You cannot move for {pdata['cannot_move_for']} turns",
                     ephemeral=True)
             else:
                 await interaction.response.send_message("You've already did your move! Wait for the next round!",
