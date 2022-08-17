@@ -86,6 +86,7 @@ class Game:
             elif pdata["choice"] == GameChoice.ACTION_CARD:
                 final_string = f"Uses action card on {pdata['action_target'].mention}"
                 card = random.choice(cards)
+                card.game = self
                 card.set_target_and_caster(f"{pdata['action_target'].id}", f"{i.id}")
                 final_string += f"{card.text}"
                 self.player_data[f"{pdata['action_target'].id}"]["action_pending"].append(card)
@@ -203,6 +204,12 @@ class Game:
 
         winner_list = []
         for i in self.player_data:
+            for actions in self.player_data[i]["action_pending"]:
+                if actions.active:
+                    actions.on_check()
+                    del actions
+                else:
+                    actions.active = True
             if self.player_data[i]["field"] < 1:
                 self.player_data[i]["field"] = 1
             if self.player_data[i]["field"] >= 12:

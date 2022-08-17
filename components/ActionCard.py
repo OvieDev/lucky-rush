@@ -5,7 +5,6 @@ class ActionCard(Luckybox):
     def __init__(self, text: str, actions: dict):
         super().__init__(text, actions)
         self.target = None
-        self.caster = None
         self.active = False
 
     def on_check(self):
@@ -13,7 +12,7 @@ class ActionCard(Luckybox):
 
     def set_target_and_caster(self, t, c):
         self.target = t
-        self.caster = c
+        self.player = c
         self.text.replace("%", f"<@{self.target}>")
 
 

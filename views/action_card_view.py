@@ -7,8 +7,8 @@ from components.GameChoice import GameChoice
 
 class ActionCardView(ui.View):
 
-    def __init__(self, game, player):
-        super().__init__()
+    def __init__(self, game, player, timeout=10):
+        super().__init__(timeout=timeout)
         self.game = game
         self.buttons = []
         self.player = player
@@ -16,6 +16,10 @@ class ActionCardView(ui.View):
 
         for i, e in enumerate(self.children):
             e.emoji = emojis[i]
+
+    def disable_buttons(self):
+        for i in self.children:
+            i.disabled = True
 
     def get_players_and_emojis(self):
         player_index = self.game.players.index(self.player)
@@ -38,7 +42,8 @@ class ActionCardView(ui.View):
         caster_data["action_target"] = self.buttons[0]
         caster_data["moved"] = True
         caster_data["choice"] = GameChoice.ACTION_CARD
-        await interaction.response.send_message(content=f"You used an action card on {self.buttons[0]}", ephemeral=True)
+        self.disable_buttons()
+        await interaction.response.edit_message(content=f"You used an action card on {self.buttons[0]}", view=self)
 
     @ui.button(style=discord.ButtonStyle.danger)
     async def target_player_2(self, interaction: discord.Interaction, button):
@@ -46,4 +51,6 @@ class ActionCardView(ui.View):
         caster_data["action_target"] = self.buttons[1]
         caster_data["moved"] = True
         caster_data["choice"] = GameChoice.ACTION_CARD
-        await interaction.response.send_message(content=f"You used an action card on {self.buttons[1]}", ephemeral=True)
+        self.disable_buttons()
+        await interaction.response.edit_message(content=f"You used an action card on {self.buttons[1]}", view=self)
+
