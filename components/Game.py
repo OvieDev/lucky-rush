@@ -3,6 +3,7 @@ import asyncio
 import discord
 import random
 
+from components.ActionCard import cards
 from components.Luckybox import select_random_box
 from components.GameChoice import GameChoice
 from views.gameplay_view import GameplayView
@@ -19,7 +20,7 @@ class Game:
         self.__wait_time = 15
         self.stopped = False
         self.bot = bot
-        self.players = session.players
+        self.players: list = session.players
         self.player_data = {}
         self.channel = session.channel
         self.round = 1
@@ -35,20 +36,22 @@ class Game:
                 "luckyboxes": [False, False, False, False, False, False, False, False, False, False, True],
                 "action_cards": 0,
                 "counter_cards": 0,
-                "trap_cards": 0
+                "trap_cards": 0,
+                "action_pending": [],
+                "action_target": None
             }
         self.t: asyncio.Task = None
 
     async def player_choice_gen(self):
         embed = discord.Embed(title=f"Round {self.round} COMPLETED!", description="What happened in this round?\n")
         for i in self.players:
+            pdata = self.player_data[f"{i.id}"]
             final_string = ""
 
-            if self.player_data[f"{i.id}"]["choice"] == GameChoice.PASS:
+            if pdata["choice"] == GameChoice.PASS:
                 final_string = f"Have passed the luckybox"
 
-            elif self.player_data[f"{i.id}"]["choice"] == GameChoice.CHECK:
-                pdata = self.player_data[f"{i.id}"]
+            elif pdata["choice"] == GameChoice.CHECK:
 
                 if pdata["field"] - 2 < 0:
                     field = 0
@@ -77,8 +80,15 @@ class Game:
                 else:
                     final_string = "Have tried to check the luckybox, but it was already open!"
 
-            elif self.player_data[f"{i.id}"]["choice"] == GameChoice.NONE:
+            elif pdata["choice"] == GameChoice.NONE:
                 final_string = "Is standing"
+
+            elif pdata["choice"] == GameChoice.ACTION_CARD:
+                final_string = f"Uses action card on {pdata['action_target'].mention}"
+                card = random.choice(cards)
+                card.set_target_and_caster(f"{pdata['action_target'].id}", f"{i.id}")
+                final_string += f"{card.text}"
+                self.player_data[f"{pdata['action_target'].id}"]["action_pending"].append(card)
             embed.add_field(name=f"{i.name}", value=final_string, inline=False)
 
         footer = "Players waiting: "
@@ -144,11 +154,8 @@ class Game:
                             self.player_data[k]["field"] += 1
                             self.player_data[k]["moved"] = True
                             self.player_data[k]["choice"] = GameChoice.PASS
-                            print("Timeouted route")
                     await self.round_completion()
             except Exception as e:
-                print("Exceptional route")
-                print(e)
                 await self.round_completion()
 
     async def end_game(self, users):
@@ -166,11 +173,9 @@ class Game:
 
     async def choice_made(self):
         for k in self.player_data:
-            print(self.player_data)
             if self.player_data[k]["moved"] is False:
                 break
         else:
-            print("Normal route")
             await self.round_completion()
 
     async def start_game(self):
@@ -198,6 +203,8 @@ class Game:
 
         winner_list = []
         for i in self.player_data:
+            if self.player_data[i]["field"] < 1:
+                self.player_data[i]["field"] = 1
             if self.player_data[i]["field"] >= 12:
                 winner_list.append(i)
 

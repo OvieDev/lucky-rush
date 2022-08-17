@@ -2,6 +2,7 @@ import discord
 from discord import ui
 
 from components.GameChoice import GameChoice
+from views.action_card_view import ActionCardView
 
 
 class GameplayView(ui.View):
@@ -50,7 +51,16 @@ class GameplayView(ui.View):
 
     @ui.button(label="Action Card", style=discord.ButtonStyle.blurple, emoji="<:action_card:1008726126220300358>")
     async def action_card_button(self, interaction: discord.Interaction, button):
-        pass
+        pdata = self.game.player_data[f"{interaction.user.id}"]
+        if not pdata["moved"]:
+            if pdata["action_cards"]>0:
+                await interaction.response.send_message(view=ActionCardView(self.game, interaction.user), ephemeral=True)
+            else:
+                await interaction.response.send_message("You don't have any action cards",
+                                                        ephemeral=True)
+        else:
+            await interaction.response.send_message("You've already did your move! Wait for the next round!",
+                                                    ephemeral=True)
 
     @ui.button(label="Counter Card", style=discord.ButtonStyle.green, emoji="<:counter_card:1008727843506765915>")
     async def counter_card_button(self, interaction: discord.Interaction, button):
