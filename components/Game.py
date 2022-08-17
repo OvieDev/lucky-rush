@@ -90,6 +90,9 @@ class Game:
                 card.set_target_and_caster(f"{pdata['action_target'].id}", f"{i.id}")
                 final_string += f"{card.text}"
                 self.player_data[f"{pdata['action_target'].id}"]["action_pending"].append(card)
+
+            elif pdata["choice"] == GameChoice.COUNTER_CARD:
+                final_string = "Used a counter card!"
             embed.add_field(name=f"{i.name}", value=final_string, inline=False)
 
         footer = "Players waiting: "
@@ -173,6 +176,7 @@ class Game:
         del self
 
     async def choice_made(self):
+        print(self.player_data)
         for k in self.player_data:
             if self.player_data[k]["moved"] is False:
                 break
@@ -204,7 +208,9 @@ class Game:
 
         winner_list = []
         for i in self.player_data:
+            print(i)
             for actions in self.player_data[i]["action_pending"]:
+                print(actions.active)
                 if actions.active:
                     actions.on_check()
                     self.player_data[i]["action_pending"].remove(actions)

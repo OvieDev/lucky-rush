@@ -15,6 +15,11 @@ class ActionCard(Luckybox):
         self.player = c
         self.text.replace("%", f"<@{self.target}>")
 
+    def counter(self):
+        temp = self.target
+        self.target = self.player
+        self.player = temp
+
 
 cards = [
     ActionCard(f"You throw a rock at %. He will be stunned for 1 turn", {"default": {

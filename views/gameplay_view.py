@@ -64,7 +64,22 @@ class GameplayView(ui.View):
 
     @ui.button(label="Counter Card", style=discord.ButtonStyle.green, emoji="<:counter_card:1008727843506765915>")
     async def counter_card_button(self, interaction: discord.Interaction, button):
-        pass
+        pdata = self.game.player_data[f"{interaction.user.id}"]
+        if not pdata["moved"]:
+            if pdata["counter_cards"]>0 and len(pdata["action_pending"]) > 0:
+                pdata["counter_cards"]-=1
+                pdata["moved"] = True
+                pdata["choice"] = GameChoice.COUNTER_CARD
+                card = pdata["action_pending"].pop(0)
+                card.active = False
+                card.counter()
+                self.game.player_data[f"{card.target}"]["action_pending"].append(card)
+                await interaction.response.send_message("Successfully countered!", ephemeral=True)
+            else:
+                await interaction.response.send_message("You can't use counter cards right now", ephemeral=True)
+        else:
+            await interaction.response.send_message("You've already did your move! Wait for the next round!",
+                                                    ephemeral=True)
 
     @ui.button(label="Trap Card", style=discord.ButtonStyle.danger, emoji="<:trap_card:1008729882974490735>")
     async def trap_card_button(self, interaction: discord.Interaction, button):
