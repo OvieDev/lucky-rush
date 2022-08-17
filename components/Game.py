@@ -207,7 +207,7 @@ class Game:
             for actions in self.player_data[i]["action_pending"]:
                 if actions.active:
                     actions.on_check()
-                    del actions
+                    self.player_data[i]["action_pending"].remove(actions)
                 else:
                     actions.active = True
             if self.player_data[i]["field"] < 1:
