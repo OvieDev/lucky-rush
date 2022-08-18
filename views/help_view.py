@@ -14,7 +14,7 @@ class HelpView(ui.View):
         if self.pageid == 0:
             embed.add_field(name="help", value="Shows all of commands", inline=False)
             embed.add_field(name="rules", value="Shows rules of the Lucky Rush", inline=False)
-            embed.add_field(name="start", value="Starts a new game", inline=False)
+            embed.add_field(name="lobby", value="Create a new game lobby", inline=False)
             embed.add_field(name="join", value="Join a game via code", inline=False)
             embed.add_field(name="gameopt", value="Set options of the game", inline=False)
         elif self.pageid==1:
