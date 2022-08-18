@@ -44,6 +44,7 @@ class ActionCardView(ui.View):
         caster_data["choice"] = GameChoice.ACTION_CARD
         self.disable_buttons()
         await interaction.response.edit_message(content=f"You used an action card on {self.buttons[0]}", view=self)
+        await self.game.choice_made()
 
     @ui.button(style=discord.ButtonStyle.danger)
     async def target_player_2(self, interaction: discord.Interaction, button):
@@ -53,4 +54,5 @@ class ActionCardView(ui.View):
         caster_data["choice"] = GameChoice.ACTION_CARD
         self.disable_buttons()
         await interaction.response.edit_message(content=f"You used an action card on {self.buttons[1]}", view=self)
+        await self.game.choice_made()
 

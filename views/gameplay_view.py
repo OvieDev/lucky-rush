@@ -3,6 +3,7 @@ from discord import ui
 
 from components.GameChoice import GameChoice
 from views.action_card_view import ActionCardView
+from views.trap_card_view import TrapCardView
 
 
 class GameplayView(ui.View):
@@ -75,6 +76,7 @@ class GameplayView(ui.View):
                 card.counter()
                 self.game.player_data[f"{card.target}"]["action_pending"].append(card)
                 await interaction.response.send_message("Successfully countered!", ephemeral=True)
+                await self.game.choice_made()
             else:
                 await interaction.response.send_message("You can't use counter cards right now", ephemeral=True)
         else:
@@ -83,4 +85,13 @@ class GameplayView(ui.View):
 
     @ui.button(label="Trap Card", style=discord.ButtonStyle.danger, emoji="<:trap_card:1008729882974490735>")
     async def trap_card_button(self, interaction: discord.Interaction, button):
-        pass
+        pdata = self.game.player_data[f"{interaction.user.id}"]
+        if not pdata["moved"]:
+            if pdata["trap_cards"]>0:
+                await interaction.response.send_message(content="Select field", view=TrapCardView(self.game), ephemeral=True)
+            else:
+                await interaction.response.send_message("You don't have any trap cards", ephemeral=True)
+        else:
+            await interaction.response.send_message("You've already did your move! Wait for the next round!",
+                                                    ephemeral=True)
+

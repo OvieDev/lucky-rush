@@ -31,7 +31,7 @@ cards = [
     ActionCard("You do a backflip. It's sooo cool, that % must pay some respect and goes back 2 fields", {"default": {
         "fields": -2
     }}),
-    ActionCard("You thrown some nerdy words, such as \"cacophony\", which made your target feel stupid for 3 turns", {
+    ActionCard("You thrown some nerdy words, such as *\"cacophony\"*, which made your target feel stupid for 3 turns", {
         "default": {
             "timeout": 3
         }

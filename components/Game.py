@@ -27,6 +27,7 @@ class Game:
         self.moved = {}
         self.player_choice = {}
         self.message: discord.Message = None
+        self.traps = [False, False, False, False, False, False, False, False, False, False, False]  # 2, 3, 4 etc.
         for i in self.players:
             self.player_data[f"{i.id}"] = {
                 "field": 1,
@@ -47,57 +48,68 @@ class Game:
         for i in self.players:
             pdata = self.player_data[f"{i.id}"]
             final_string = ""
+            if self.traps[pdata["field"] - 2] and random.uniform(0, 1) > 0.2:
+                final_string += "Has encountered a trap, which makes him move few fields backwards"
+                self.traps[pdata["field"] - 2] = False
+                pdata["field"] -= random.randint(1, 6)
+                pdata["cannot_move_for"] += 1
+            else:
+                if pdata["choice"] == GameChoice.PASS:
+                    final_string += f"Has passed the luckybox"
 
-            if pdata["choice"] == GameChoice.PASS:
-                final_string = f"Have passed the luckybox"
+                elif pdata["choice"] == GameChoice.CHECK:
 
-            elif pdata["choice"] == GameChoice.CHECK:
+                    if pdata["field"] - 2 < 0:
+                        field = 0
+                    else:
+                        field = pdata["field"] - 2
 
-                if pdata["field"] - 2 < 0:
-                    field = 0
-                else:
-                    field = pdata["field"] - 2
+                    if pdata["luckyboxes"][field] is False:
+                        lb = select_random_box(self, f"{i.id}")
+                        final_string += f"Has checked the luckybox. {lb.text}\n"
+                        lb.on_check()
+                        pdata["luckyboxes"][field] = True
+                        card = random.randint(0, 2)
 
-                if pdata["luckyboxes"][field] is False:
-                    lb = select_random_box(self, f"{i.id}")
-                    final_string = f"Have checked the luckybox. {lb.text}\n"
-                    lb.on_check()
-                    pdata["luckyboxes"][field] = True
-                    card = random.randint(0, 2)
+                        if card == 0:
+                            card_type = "action_cards"
 
-                    if card == 0:
-                        card_type = "action_cards"
+                        elif card == 1:
+                            card_type = "trap_cards"
 
-                    elif card == 1:
-                        card_type = "trap_cards"
+                        else:
+                            card_type = "counter_cards"
+
+                        pdata[card_type] += 1
+                        final_string += f"{i.mention} also receives 1 {Game.card_types[card_type]}\n"
 
                     else:
-                        card_type = "counter_cards"
+                        final_string += "Has tried to check the luckybox, but it was already open!"
 
-                    pdata[card_type] += 1
-                    final_string += f"{i.mention} also receives 1 {Game.card_types[card_type]}\n"
+                elif pdata["choice"] == GameChoice.NONE:
+                    final_string += "Is standing"
 
-                else:
-                    final_string = "Have tried to check the luckybox, but it was already open!"
+                elif pdata["choice"] == GameChoice.ACTION_CARD:
+                    final_string += f"Uses action card on {pdata['action_target'].mention}"
+                    card = random.choice(cards)
+                    card.game = self
+                    card.set_target_and_caster(f"{pdata['action_target'].id}", f"{i.id}")
+                    final_string += f"{card.text}"
+                    self.player_data[f"{pdata['action_target'].id}"]["action_pending"].append(card)
 
-            elif pdata["choice"] == GameChoice.NONE:
-                final_string = "Is standing"
+                elif pdata["choice"] == GameChoice.COUNTER_CARD:
+                    final_string += "Used a counter card!"
 
-            elif pdata["choice"] == GameChoice.ACTION_CARD:
-                final_string = f"Uses action card on {pdata['action_target'].mention}"
-                card = random.choice(cards)
-                card.game = self
-                card.set_target_and_caster(f"{pdata['action_target'].id}", f"{i.id}")
-                final_string += f"{card.text}"
-                self.player_data[f"{pdata['action_target'].id}"]["action_pending"].append(card)
+                elif pdata["choice"] == GameChoice.TRAP_CARD:
+                    final_string += "Did something sneaky ;)"
 
-            elif pdata["choice"] == GameChoice.COUNTER_CARD:
-                final_string = "Used a counter card!"
             embed.add_field(name=f"{i.name}", value=final_string, inline=False)
 
         footer = "Players waiting: "
+
         for p in self.players:
             footer += f"{p.name} : {self.player_data[f'{p.id}']['cannot_move_for']}, "
+
         embed.set_footer(text=footer)
         embed.colour = discord.Colour.random()
         return embed
