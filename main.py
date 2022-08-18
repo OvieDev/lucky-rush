@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 
 from components.GameSession import GameSession, sessions, sessiontime_decrease
+from views.gameplay_view import GameplayView
 from views.help_view import HelpView
 from views.join_view import JoinView
 
@@ -16,6 +17,10 @@ load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="rush!", intents=intents, help_command=None)
+
+@bot.event
+async def on_timeout(message: discord.Message, game):
+    await message.edit(embed=game.create_message(), view=GameplayView(game))
 
 @bot.event
 async def on_session_terminated(u, k, c):
@@ -51,7 +56,7 @@ async def on_ready():
                 await y.delete()
 
 
-@bot.hybrid_command()
+@bot.hybrid_command(description="Display rules for Lucky Rush")
 async def rules(ctx):
     print("xxx")
     embed = discord.Embed(title="Rules", description="""
@@ -70,7 +75,7 @@ async def rules(ctx):
     await ctx.send(embed=embed)
 
 
-@bot.hybrid_command(name="help")
+@bot.hybrid_command(name="help", description="View all possible commands")
 async def helpme(ctx: discord.TextChannel):
     embed = discord.Embed(title=f"Help - Page 1")
     embed.add_field(name="help", value="Shows all of commands", inline=False)
@@ -83,19 +88,18 @@ async def helpme(ctx: discord.TextChannel):
     await ctx.send(embed=embed, view=HelpView())
 
 
-@bot.hybrid_command()
+@bot.hybrid_command(description="Get an invite link (if you couldn't just go to my profile lol)")
 async def invite(ctx):
     await ctx.send("Here's my invite link: <https://tinyurl.com/rushinvite>")
 
 
-@bot.hybrid_command()
+@bot.hybrid_command(description="Get a link to my github (if you couldn't open my about me section lol)")
 async def github(ctx):
     await ctx.send("Want to contribute? Sure, here's my github: <https://tinyurl.com/luckyrush>")
 
 
-
-@bot.hybrid_command()
-async def start(ctx):
+@bot.hybrid_command(description="Start a new lobby for Lucky Rush")
+async def lobby(ctx):
     code = ''.join(random.choices(string.ascii_lowercase, k=10))
     while True:
         if code in sessions:
@@ -110,7 +114,7 @@ async def start(ctx):
 
     guild: discord.Guild = ctx.guild
     c = await guild.create_text_channel(f"luckyrush-{len(sessions)}")
-    sessions[code] = GameSession(ctx.author, guild, c)
+    sessions[code] = GameSession(bot, ctx.author, guild, c)
     await c.send(embed=embed)
     await c.set_permissions(guild.default_role, overwrite=discord.PermissionOverwrite(
         view_channel=False
@@ -120,12 +124,12 @@ async def start(ctx):
     ))
 
 
-@bot.hybrid_command()
+@bot.hybrid_command(description="Join to the Lucky Rush lobby via code")
 async def join(ctx):
     await ctx.send(view=JoinView())
 
 
-@bot.hybrid_command()
+@bot.hybrid_command(description="Leave the lobby you're currently in")
 async def leave(ctx):
     for i in sessions.values():
         if ctx.author in i.players:
