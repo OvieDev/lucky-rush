@@ -6,6 +6,7 @@ import random
 from components.ActionCard import cards
 from components.Luckybox import select_random_box
 from components.GameChoice import GameChoice
+import components.GameSession as GS
 from views.gameplay_view import GameplayView
 
 
@@ -42,6 +43,7 @@ class Game:
                 "action_target": None
             }
         self.t: asyncio.Task = None
+        self.session = session
 
     async def player_choice_gen(self):
         embed = discord.Embed(title=f"Round {self.round} COMPLETED!", description="What happened in this round?\n")
@@ -116,7 +118,7 @@ class Game:
 
     def create_message(self):
         embed = discord.Embed(title=f"Round {self.round}")
-        embed.description = ":white_large_square::white_large_square::white_large_square:\n"
+        embed.description = ":white_large_square::white_large_square::white_large_square: **12**\n"
         counter = 11
 
         def square_color(who):
@@ -129,6 +131,7 @@ class Game:
                     return ":black_large_square:"
 
         for i in range(11):
+
             if self.player_data[f"{self.players[0].id}"]["field"] == counter:
                 embed.description += ":mage:"
             else:
@@ -143,6 +146,9 @@ class Game:
                 embed.description += ":genie:"
             else:
                 embed.description += square_color(f"{self.players[2].id}")
+
+            num = 11 - i
+            embed.description += f" **{num}**"
 
             embed.description += "\n"
             counter -= 1
@@ -185,6 +191,12 @@ class Game:
         await self.channel.send(f"{mentions}you have won the game! <a:tada_blob:1008732078331936892>")
         await asyncio.sleep(7)
         await self.channel.delete()
+
+        self.t.cancel()
+        ses_copy = GS.sessions.copy()
+        for k, v in ses_copy.items():
+            if v == self.session:
+                del GS.sessions[k]
         del self
 
     async def choice_made(self):
@@ -232,11 +244,12 @@ class Game:
 
         if len(winner_list) > 0:
             await self.end_game(winner_list)
+        else:
 
-        for k in self.player_data:
-            if self.player_data[k]["cannot_move_for"] == 0:
-                self.player_data[k]["moved"] = False
-            self.player_data[k]["choice"] = GameChoice.NONE
+            for k in self.player_data:
+                if self.player_data[k]["cannot_move_for"] == 0:
+                    self.player_data[k]["moved"] = False
+                self.player_data[k]["choice"] = GameChoice.NONE
 
-        self.stopped = False
-        await self.start_game()
+            self.stopped = False
+            await self.start_game()

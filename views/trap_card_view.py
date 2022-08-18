@@ -23,9 +23,8 @@ class TrapCardView(ui.View):
         self.copy = self.choices.copy()
         self.game = game
         for i in self.game.player_data:
-            print(self.game.player_data[i]["field"])
-            print(self.game.player_data[i]["field"] in TrapCardView.choices)
-            if self.game.player_data[i]["field"] in TrapCardView.choices:
+            print(f"copy: {self.copy}")
+            if self.game.player_data[i]["field"] in self.copy:
                 del self.copy[self.game.player_data[i]["field"]]
 
         self.children[0].options = list(self.copy.values())
