@@ -18,25 +18,21 @@ class Luckybox:
         self.actions = actions
 
     def key_actions(self, variant, keys):
-        if "fields" in self.actions[variant]:
-            for i in keys:
-                self.game.player_data[i]["field"] += self.actions[variant]["fields"]
+        mapping = {
+            "fields": "field",
+            "timeout": "cannot_move_for",
+            "action_cards": "action_cards",
+            "counter_cards": "counter_cards"
+        }
 
-        if "timeout" in self.actions[variant]:
-            for i in keys:
-                self.game.player_data[i]["cannot_move_for"] += self.actions[variant]["timeout"]
-
-        if "set_field" in self.actions[variant]:
-            for i in keys:
-                self.game.player_data[i]["field"] = self.actions[variant]["set_field"]
-
-        if "action_cards" in self.actions[variant]:
-            for i in keys:
-                self.game.player_data[i]["action_cards"] += self.actions[variant]["action_cards"]
-
-        if "counter_cards" in self.actions[variant]:
-            for i in keys:
-                self.game.player_data[i]["counter_cards"] += self.actions[variant]["counter_cards"]
+        for k in self.actions[variant]:
+            if k == "set_field":
+                for i in keys:
+                    self.game.player_data[i]["field"] = self.actions[variant]["set_field"]
+            elif k in mapping:
+                for i in keys:
+                    key = mapping[k]
+                    self.game.player_data[i][key] += self.actions[variant][k]
 
     def on_check(self):
         if "everyone" in self.actions:

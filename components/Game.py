@@ -21,6 +21,15 @@ def get_card_type(card):
         return "counter_cards"
 
 
+def resolve_icon(index):
+    if index == 0:
+        return ":mage:"
+    elif index == 1:
+        return ":vampire:"
+    elif index == 2:
+        return ":genie:"
+
+
 class Game:
     card_types = {
         "action_cards": "<:action_card:1008726126220300358>",
@@ -133,21 +142,11 @@ class Game:
         counter = 11
 
         for i in range(11):
-
-            if self.player_data[f"{self.players[0].id}"]["field"] == counter:
-                embed.description += ":mage:"
-            else:
-                embed.description += self.square_color(f"{self.players[0].id}", counter)
-
-            if self.player_data[f"{self.players[1].id}"]["field"] == counter:
-                embed.description += ":vampire:"
-            else:
-                embed.description += self.square_color(f"{self.players[1].id}", counter)
-
-            if self.player_data[f"{self.players[2].id}"]["field"] == counter:
-                embed.description += ":genie:"
-            else:
-                embed.description += self.square_color(f"{self.players[2].id}", counter)
+            for index in range(3):
+                if self.player_data[f"{self.players[index].id}"]["field"] == counter:
+                    embed.description += resolve_icon(index)
+                else:
+                    embed.description += self.square_color(f"{self.players[index].id}", counter)
 
             num = 11 - i
             embed.description += f" **{num}**"
