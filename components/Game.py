@@ -10,6 +10,17 @@ import components.GameSession as GS
 from views.gameplay_view import GameplayView
 
 
+def get_card_type(card):
+    if card == 0:
+        return "action_cards"
+
+    elif card == 1:
+        return "trap_cards"
+
+    else:
+        return "counter_cards"
+
+
 class Game:
     card_types = {
         "action_cards": "<:action_card:1008726126220300358>",
@@ -72,16 +83,7 @@ class Game:
                         lb.on_check()
                         pdata["luckyboxes"][field] = True
                         card = random.randint(0, 2)
-
-                        if card == 0:
-                            card_type = "action_cards"
-
-                        elif card == 1:
-                            card_type = "trap_cards"
-
-                        else:
-                            card_type = "counter_cards"
-
+                        card_type = get_card_type(card)
                         pdata[card_type] += 1
                         final_string += f"{i.mention} also receives 1 {Game.card_types[card_type]}\n"
 
@@ -116,36 +118,36 @@ class Game:
         embed.colour = discord.Colour.random()
         return embed
 
+    def square_color(self, who, counter):
+        if counter == 1:
+            return ":green_square:"
+        else:
+            if self.player_data[who]["luckyboxes"][counter - 2] is True:
+                return ":large_orange_diamond:"
+            else:
+                return ":black_large_square:"
+
     def create_message(self):
         embed = discord.Embed(title=f"Round {self.round}")
         embed.description = ":white_large_square::white_large_square::white_large_square: **12**\n"
         counter = 11
-
-        def square_color(who):
-            if counter == 1:
-                return ":green_square:"
-            else:
-                if self.player_data[who]["luckyboxes"][counter - 2] is True:
-                    return ":large_orange_diamond:"
-                else:
-                    return ":black_large_square:"
 
         for i in range(11):
 
             if self.player_data[f"{self.players[0].id}"]["field"] == counter:
                 embed.description += ":mage:"
             else:
-                embed.description += square_color(f"{self.players[0].id}")
+                embed.description += self.square_color(f"{self.players[0].id}", counter)
 
             if self.player_data[f"{self.players[1].id}"]["field"] == counter:
                 embed.description += ":vampire:"
             else:
-                embed.description += square_color(f"{self.players[1].id}")
+                embed.description += self.square_color(f"{self.players[1].id}", counter)
 
             if self.player_data[f"{self.players[2].id}"]["field"] == counter:
                 embed.description += ":genie:"
             else:
-                embed.description += square_color(f"{self.players[2].id}")
+                embed.description += self.square_color(f"{self.players[2].id}", counter)
 
             num = 11 - i
             embed.description += f" **{num}**"
