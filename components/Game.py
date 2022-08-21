@@ -76,6 +76,18 @@ class Game:
                 pdata["field"] -= random.randint(1, 6)
                 pdata["cannot_move_for"] += 1
             else:
+                if pdata["field"] == 6 or pdata["field"] == 11:
+                    mapping = {
+                        GameChoice.TRAP_CARD: "trap_cards",
+                        GameChoice.ACTION_CARD: "action_cards",
+                        GameChoice.COUNTER_CARD: "counter_cards"
+                    }
+
+                    if pdata["choice"] in mapping:
+                        key = mapping[pdata["choice"]]
+                        pdata[key] += 1
+                    pdata["choice"] = GameChoice.CHECK
+
                 if pdata["choice"] == GameChoice.PASS:
                     final_string += f"Has passed the luckybox"
 
@@ -130,6 +142,8 @@ class Game:
     def square_color(self, who, counter):
         if counter == 1:
             return ":green_square:"
+        elif counter == 6 or counter == 11:
+            return ":red_square:"
         else:
             if self.player_data[who]["luckyboxes"][counter - 2] is True:
                 return ":large_orange_diamond:"
