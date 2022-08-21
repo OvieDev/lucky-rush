@@ -11,18 +11,14 @@ sessions = {
 
 
 def sessiontime_decrease(bot):
-    global sessions
     while True:
-        try:
-            time.sleep(1)
-            for k, v in list(sessions.items()):
-                v.until -= 1
-                if v.until == 0 and not v.more_than_one:
-                    id = v.players[0].id
-                    bot.dispatch("session_terminated", id, k, v.channel)
-                    print(f"deleted ses with id = {k}")
-        except Exception as e:
-            print(e)
+        time.sleep(1)
+        for k, v in list(sessions.items()):
+            v.until -= 1
+            if v.until == 0 and not v.more_than_one:
+                id = v.players[0].id
+                bot.dispatch("session_terminated", id, k, v.channel)
+                print(f"deleted ses with id = {k}")
 
 
 class GameSession:

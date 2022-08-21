@@ -1,5 +1,10 @@
+![Code Climate Issues](https://img.shields.io/codeclimate/issues/OvieDev/lucky-rush?logo=Code%20Climate)
+![Latest Commit](https://img.shields.io/github/last-commit/OvieDev/lucky-rush?label=Latest%20Commit)
+![Python 3.9](https://img.shields.io/static/v1?label=python&message=3.9&color=brightgreen&logo=python)
 # Lucky Rush
-Get ready to play an original game packed inside a nice discord bot with some additional features! It's free, it's awesome. What is not to like?
+Lucky Rush is a discord bot which provides a lot of fun features and games for the entire server. But it's main feature is
+a game called "Lucky Rush", where randomness is your blessing, and a curse in the same time, although you can find some
+strategy elements here and there.
 
 # Game Description
 To play this game, you will need 2 other friends. The game is divided into rounds.\

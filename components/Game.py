@@ -10,6 +10,26 @@ import components.GameSession as GS
 from views.gameplay_view import GameplayView
 
 
+def get_card_type(card):
+    if card == 0:
+        return "action_cards"
+
+    elif card == 1:
+        return "trap_cards"
+
+    else:
+        return "counter_cards"
+
+
+def resolve_icon(index):
+    if index == 0:
+        return ":mage:"
+    elif index == 1:
+        return ":vampire:"
+    elif index == 2:
+        return ":genie:"
+
+
 class Game:
     card_types = {
         "action_cards": "<:action_card:1008726126220300358>",
@@ -56,6 +76,18 @@ class Game:
                 pdata["field"] -= random.randint(1, 6)
                 pdata["cannot_move_for"] += 1
             else:
+                if pdata["field"] == 6 or pdata["field"] == 11:
+                    mapping = {
+                        GameChoice.TRAP_CARD: "trap_cards",
+                        GameChoice.ACTION_CARD: "action_cards",
+                        GameChoice.COUNTER_CARD: "counter_cards"
+                    }
+
+                    if pdata["choice"] in mapping:
+                        key = mapping[pdata["choice"]]
+                        pdata[key] += 1
+                    pdata["choice"] = GameChoice.CHECK
+
                 if pdata["choice"] == GameChoice.PASS:
                     final_string += f"Has passed the luckybox"
 
@@ -72,16 +104,7 @@ class Game:
                         lb.on_check()
                         pdata["luckyboxes"][field] = True
                         card = random.randint(0, 2)
-
-                        if card == 0:
-                            card_type = "action_cards"
-
-                        elif card == 1:
-                            card_type = "trap_cards"
-
-                        else:
-                            card_type = "counter_cards"
-
+                        card_type = get_card_type(card)
                         pdata[card_type] += 1
                         final_string += f"{i.mention} also receives 1 {Game.card_types[card_type]}\n"
 
@@ -116,36 +139,32 @@ class Game:
         embed.colour = discord.Colour.random()
         return embed
 
+    def square_color(self, who, counter):
+        special_fields = {
+            1: ":green_square:",
+            6: ":red_square:",
+            11: ":red_square:"
+        }
+
+        if counter in special_fields:
+            return special_fields[counter]
+        else:
+            if self.player_data[who]["luckyboxes"][counter - 2] is True:
+                return ":large_orange_diamond:"
+            else:
+                return ":black_large_square:"
+
     def create_message(self):
         embed = discord.Embed(title=f"Round {self.round}")
         embed.description = ":white_large_square::white_large_square::white_large_square: **12**\n"
         counter = 11
 
-        def square_color(who):
-            if counter == 1:
-                return ":green_square:"
-            else:
-                if self.player_data[who]["luckyboxes"][counter - 2] is True:
-                    return ":large_orange_diamond:"
-                else:
-                    return ":black_large_square:"
-
         for i in range(11):
-
-            if self.player_data[f"{self.players[0].id}"]["field"] == counter:
-                embed.description += ":mage:"
-            else:
-                embed.description += square_color(f"{self.players[0].id}")
-
-            if self.player_data[f"{self.players[1].id}"]["field"] == counter:
-                embed.description += ":vampire:"
-            else:
-                embed.description += square_color(f"{self.players[1].id}")
-
-            if self.player_data[f"{self.players[2].id}"]["field"] == counter:
-                embed.description += ":genie:"
-            else:
-                embed.description += square_color(f"{self.players[2].id}")
+            for index in range(3):
+                if self.player_data[f"{self.players[index].id}"]["field"] == counter:
+                    embed.description += resolve_icon(index)
+                else:
+                    embed.description += self.square_color(f"{self.players[index].id}", counter)
 
             num = 11 - i
             embed.description += f" **{num}**"
