@@ -140,10 +140,14 @@ class Game:
         return embed
 
     def square_color(self, who, counter):
-        if counter == 1:
-            return ":green_square:"
-        elif counter == 6 or counter == 11:
-            return ":red_square:"
+        special_fields = {
+            1: ":green_square:",
+            6: ":red_square:",
+            11: ":red_square:"
+        }
+
+        if counter in special_fields:
+            return special_fields[counter]
         else:
             if self.player_data[who]["luckyboxes"][counter - 2] is True:
                 return ":large_orange_diamond:"
