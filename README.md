@@ -12,7 +12,7 @@ To play this game, you will need 2 other friends. The game is divided into round
 \------\
 Each round you have two options. Or to **CHECK** the "luckybox", or to **PASS** it.\
 \------\
-Luckyboxes contain a surprise for you, to use as a advantage pyor you or as a disadvantage for other players. Sadly, in those boxes you may also find some not cool stuff.\
+Luckyboxes contain a surprise for you, to use as a advantage for you or as a disadvantage for other players. Sadly, in those boxes you may also find some not cool stuff.\
 \------\
 Every round you move one step closer to the finish line after every action (except when your (or other player's) luckybox said otherwise) \
 \------\
