@@ -1,10 +1,11 @@
-import asyncio
+
 import os
 import random
 import string
 from threading import Thread
 
 import discord
+from discord.app_commands import Choice, describe, choices
 from dotenv import load_dotenv
 from discord.ext import commands
 
@@ -12,15 +13,18 @@ from components.GameSession import GameSession, sessions, sessiontime_decrease
 from views.gameplay_view import GameplayView
 from views.help_view import HelpView
 from views.join_view import JoinView
+from views.tic_tac_toe_view import TicTacToeView
 
 load_dotenv()
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="rush!", intents=intents, help_command=None)
 
+
 @bot.event
 async def on_timeout(message: discord.Message, game):
     await message.edit(embed=game.create_message(), view=GameplayView(game))
+
 
 @bot.event
 async def on_session_terminated(u, k, c):
@@ -134,8 +138,21 @@ async def leave(ctx):
     for i in sessions.values():
         if ctx.author in i.players:
             await i.leave(ctx.author)
+
+
+@bot.hybrid_command(description="Play a game of Tic Tac Toe")
+@describe(
+    difficulty="How smart AI would be"
+)
+@choices(difficulty=[
+    Choice(name="Easy", value=1),
+    Choice(name="Medium", value=2),
+    Choice(name="Hard", value=3)
+])
+async def tictactoe(ctx, difficulty: Choice[int]):
+    await ctx.send(view=TicTacToeView(difficulty), ephemeral=True)
+
+
 t = Thread(target=sessiontime_decrease, args=[bot], daemon=True)
 t.start()
 bot.run(os.getenv("TOKEN"))
-
-
